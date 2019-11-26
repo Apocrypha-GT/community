@@ -11,7 +11,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
 import java.util.UUID;
 
 
@@ -22,6 +23,7 @@ public class AuthorizeController {
     @Autowired
     private GithubProvider githubProvider;
 
+    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     @Autowired
     private UserMapper userMapper;
 
@@ -36,7 +38,7 @@ public class AuthorizeController {
     @GetMapping("/callback")
     public String callback(@RequestParam(name = "code") String code,
                            @RequestParam(name = "state") String state,
-                            HttpServletRequest request){
+                            HttpServletResponse response){
         AccessTokenDTO accessTokenDTO = new AccessTokenDTO();
         //通过key获取value
         accessTokenDTO.setClient_id(clientId);
@@ -48,16 +50,17 @@ public class AuthorizeController {
         GithubUser githubUser = githubProvider.getUser(accessToken);
         if (githubUser != null){
             User user = new User();
+            String token = UUID.randomUUID().toString();
             user.setName(githubUser.getName());
             user.setAccountId(String.valueOf(githubUser.getId()));
-            user.setToken(UUID.randomUUID().toString());
+            user.setToken(token);
             //获取当前时间
             user.setGmtCreate(System.currentTimeMillis());
             user.setGmtModified(user.getGmtCreate());
+            //写入数据库，代替session
             userMapper.insert(user);
-            //登录成功，写cookie和session
-            //session在httpservletrequest中拿到
-            request.getSession().setAttribute("user",githubUser);
+            //将token写入cookie,通过token查找user
+            response.addCookie(new Cookie("token",token));
             return "redirect:/";
         } else {
             //登录失败，重新登录
