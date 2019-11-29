@@ -4,17 +4,18 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-//在类与类之间(网络传输)用dto，而在数据库中叫做model
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class User {
+public class Question {
     private Integer id;
-    private String name;
-    private String accountId;
-    private String token;
+    private String title;
+    private String description;
+    private String tag;
     private Long gmtCreate;
     private Long gmtModified;
-    private String bio;
-    private String avatarUrl;
+    private Integer creator;
+    private Integer viewCount;
+    private Integer commentCount;
+    private Integer likeCount;
 }
